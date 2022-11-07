@@ -1,35 +1,44 @@
 pub macro print {
     () => {
-        $crate::console_print("")
+        unsafe {
+            $crate::libc::printf("");
+        }
     },
 
     ($fmt:literal) => {
-        $crate::console_print($fmt)
+        unsafe {
+            $crate::libc::printf($fmt.as_ptr() as *const i8);
+        }
     },
 
     ($fmt:expr, $($arg:tt)*) => {
         unsafe {
-            extern crate alloc;
-            let fmt_string = alloc::format!($fmt, $($arg)*);
-            $crate::console_print(&fmt_string)
+            $crate::libc::printf(&fmt.as_ptr() as *const i8)
         }
     },
 }
 
 pub macro println {
     () => {
-        $crate::console_print("\n")
+        unsafe {
+            libc::printf("\n");
+        }
     },
 
     ($fmt:literal) => {
-        $crate::console_print_with_nl($fmt)
+        unsafe {
+            extern crate alloc;
+            let with_nl = alloc::format!("{}\n", $fmt);
+            $crate::libc::printf(with_nl.as_ptr() as *const i8);
+        }
     },
 
     ($fmt:expr, $($arg:tt)*) => {
         unsafe {
             extern crate alloc;
-            let fmt_string = alloc::format!($fmt, $($arg)*);
-            $crate::console_print_with_nl(&fmt_string)
+            let mut fmt_string = alloc::format!($fmt, $($arg)*);
+            fmt_string = alloc::format!("{}\n", fmt_string);
+            $crate::libc::printf(fmt_string.as_ptr() as *const i8);
         }
     },
 }
